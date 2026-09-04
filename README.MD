@@ -1,703 +1,276 @@
-# 🧠 Codebase Evolution Predictor
+# Fraud Spike Detector & Abuse Ring Sentinel
 
-> **Predict where a software codebase is heading before it gets there.**
+## 1. Overview
 
-Codebase Evolution Predictor is an **AI-powered software engineering intelligence platform** that analyzes a repository's **code structure, Git history, developer activity, and dependency graph** to predict which parts of a codebase are likely to become problematic in future development.
+This project is a real-time financial fraud detection and abuse-ring investigation system designed to protect transaction streams. The system ingests high-throughput data to instantly detect:
 
-Instead of simply detecting bugs that already exist, the system attempts to answer:
+*   **Transaction-level fraud:** Identifying suspicious individual transactions using offline-trained Machine Learning (LightGBM).
+*   **Velocity spikes:** Recognizing sudden, coordinated bursts in transaction volume or cumulative amounts.
+*   **Abuse rings:** Uncovering coordinated networks of accounts, devices, and IP addresses exhibiting synchronized behavior.
 
-> **"Which files, functions, or modules are most likely to experience bugs, high churn, complexity growth, or refactoring pressure in the future — and why?"**
+*Note: This repository represents a technical/demo implementation running on synthetic transaction traffic and is not currently integrated with a live payment gateway.*
 
-The project combines **Machine Learning, Deep Learning, Graph Neural Networks, Software Repository Mining, LLMs, and Agentic AI** into a single system.
+## 2. Key Features
 
----
+*   **Real-time transaction streaming:** Ingestion and processing of high-velocity synthetic traffic.
+*   **ML fraud scoring:** Feature extraction and inference using a pre-trained LightGBM model.
+*   **Rule-based risk signals:** Evaluates device/IP sharing, amount similarities, and coordination.
+*   **Velocity/spike detection:** Sliding window mechanics to detect volume and velocity anomalies.
+*   **Abuse-ring detection:** Memory-based graph engine to surface coordinated multi-actor attacks.
+*   **Graph-based investigation:** Visual relationship mapping of entities (Account, Device, IP, Merchant).
+*   **Redis Streams:** High-throughput asynchronous message broker for decoupling the simulator and consumer.
+*   **PostgreSQL persistence:** Durable storage for transactions, alerts, and ring states via Prisma ORM.
+*   **Socket.IO live updates:** Low-latency WebSocket connections piping telemetry to the frontend.
+*   **Analyst dashboard:** A Next.js command center for monitoring threats and system health.
+*   **Transaction investigation:** Deep-dive modal into individual flagged transactions and ML features.
+*   **Ring exploration:** Dedicated workspace for traversing extracted abuse rings.
+*   **Spike timeline:** Visual representation of volumetric attacks over time.
 
-## 🚀 Why This Project?
+## 3. Architecture
 
-Traditional static analysis tells developers:
+The system utilizes an event-driven streaming architecture bridging a high-throughput Node.js layer with a Python machine learning service.
 
-> "This code has high complexity."
-
-Traditional monitoring tells developers:
-
-> "This module already has many bugs."
-
-Codebase Evolution Predictor aims to go one step further:
-
-> **"Based on how this codebase has evolved historically, this module is likely to become a problem soon."**
-
-The system learns from the **temporal evolution of software repositories** and combines that information with the structural relationships between components.
-
----
-
-# ✨ Key Features
-
-### 🔮 1. Code Evolution Prediction
-
-Predict future risk for:
-
-* 🐛 Bug-prone files
-* 🔥 High-churn modules
-* 📈 Complexity growth
-* ♻️ Refactoring candidates
-* 🔗 Dependency-risk hotspots
-* 👨‍💻 Development bottlenecks
-
-Example:
-
-```text
-payment/service.py       91% Risk
-auth/controller.py       84% Risk
-database/connection.py   78% Risk
-user/model.py            19% Risk
+```mermaid
+graph TD
+    A[Simulator] -->|Publishes JSON| B[(Redis Streams)]
+    
+    B -->|Consumes| C[Node.js Stream Consumer]
+    
+    C -->|Calculates sliding windows| D[Real-Time Feature Engine]
+    
+    D -->|POST /predict| E[ML Service + Risk Engine]
+    E -->|fraud_probability| D
+    
+    D -->|Transaction + ML Score| F[Spike Detection Engine]
+    D -->|Nodes & Edges| G[Abuse Ring Sentinel Graph]
+    
+    F -->|velocity, volume| H[Unified Risk Engine]
+    G -->|clusters, temporal coordination| H
+    
+    H -->|FINAL RISK SCORE + WHY FLAGGED?| I[(PostgreSQL)]
+    H -->|Publishes Alerts| J[(Socket.IO)]
+    
+    J -->|Emits live| K[Next.js Dashboard]
 ```
 
----
+*The ML service (FastAPI) is strictly decoupled from the Node backend, exposing a unified prediction endpoint over HTTP.*
 
-### 🧬 2. Repository Intelligence
+## 4. Tech Stack
 
-Analyze:
+| Component | Technology |
+| :--- | :--- |
+| **Frontend** | Next.js 14, React, Tailwind CSS, Recharts |
+| **Backend** | Node.js, Express, TypeScript |
+| **Streaming** | Redis Streams (via `ioredis`) |
+| **Database** | PostgreSQL, Prisma ORM |
+| **Cache/Queue** | Redis Pub/Sub |
+| **ML** | Python, FastAPI, LightGBM, Scikit-Learn, Pandas |
+| **Visualization** | Custom Graph Visualizer, D3/Recharts concepts |
+| **Real-time communication** | Socket.IO |
+| **Deployment** | Docker (ML), Node Runtime, Static/Vercel (Frontend) |
 
-* Git commits
-* Pull requests
-* File history
-* Authors
-* Lines added/deleted
-* Commit frequency
-* Bug-fix commits
-* File age
-* Code complexity
-* Dependency relationships
+## 5. Project Structure
 
----
-
-### 🕸️ 3. Code Dependency Graph
-
-Represent the repository as a graph.
-
-```text
-                auth.py
-               /       \
-              ↓         ↓
-         user.py      session.py
-              \         /
-               ↓       ↓
-             database.py
-                  ↓
-               cache.py
+```
+fraud-spike-detector/
+├── web/                   # Next.js Command Center (Frontend)
+├── streaming/             # Node.js Event Consumer & API Backend
+├── ML/                    # Python FastAPI Service & Model Training Pipelines
+├── README.MD              # Project Documentation
+├── BACKEND.MD             # Detailed backend architecture notes
+├── PLAN.MD                # Execution roadmap
+├── .gitignore             # Global git ignores
+└── docs/assets/architecture.png  # UI Screenshot
 ```
 
-Each node represents a software component and edges represent relationships such as:
-
-* imports
-* function calls
-* inheritance
-* dependencies
-
-This graph can be used by a **Graph Neural Network (GNN)** to understand how changes propagate through a codebase.
-
----
-
-### 🤖 4. AI Investigation Agents
-
-The ML model predicts a risk score.
-
-The agents investigate **why**.
-
-```text
-ML Model
-   ↓
-Risk Score
-   ↓
-Investigator Agent
-   ↓
-┌───────────────────────┐
-│ Git History           │
-│ Code Structure        │
-│ Dependency Graph      │
-│ Recent Changes        │
-│ Bug History           │
-└───────────────────────┘
-   ↓
-AI Explanation
-```
-
-Example:
-
-> `payment/service.py` has an 87% evolution-risk score because its change frequency increased by 42%, its dependency count increased, and multiple recent commits modified shared payment state.
-
----
-
-### 🛠️ 5. Refactoring Recommendations
-
-The system can identify components that may benefit from refactoring.
-
-Example:
-
-```text
-Component:
-PaymentService
-
-Problems:
-- High cyclomatic complexity
-- High coupling
-- Rapid growth
-- Frequent modifications
-- Multiple dependent modules
-
-Recommendation:
-Split PaymentService into:
-
-PaymentProcessor
-PaymentValidator
-PaymentRepository
-PaymentEventHandler
-```
-
----
-
-### 📊 6. Codebase Health Dashboard
-
-The dashboard provides:
-
-* Repository health score
-* Risk heatmap
-* File-level risk
-* Dependency graph
-* Commit activity
-* Risk evolution over time
-* Predicted hotspots
-* AI explanations
-* Refactoring recommendations
-
----
-
-# 🏗️ System Architecture
-
-```text
-                         GitHub Repository
-                                │
-                ┌───────────────┴───────────────┐
-                │                               │
-           Git History                     Source Code
-                │                               │
-                ↓                               ↓
-        Repository Miner                  AST Parser
-                │                               │
-                └───────────────┬───────────────┘
-                                ↓
-                       Feature Extraction
-                                │
-                ┌───────────────┴───────────────┐
-                ↓                               ↓
-        Temporal Features                Dependency Graph
-                │                               │
-                │                               ↓
-                │                              GNN
-                │                               │
-                └───────────────┬───────────────┘
-                                ↓
-                         Risk Prediction
-                                │
-                                ↓
-                     ┌─────────────────────┐
-                     │ Evolution Risk      │
-                     │ Bug Risk            │
-                     │ Churn Prediction     │
-                     │ Refactoring Risk    │
-                     └─────────────────────┘
-                                │
-                                ↓
-                        Agentic Analysis
-                                │
-                ┌───────────────┼───────────────┐
-                ↓               ↓               ↓
-         Investigator       History Agent    Dependency
-             Agent                              Agent
-                │               │               │
-                └───────────────┼───────────────┘
-                                ↓
-                       Explanation + Action
-                                │
-                    ┌───────────┴───────────┐
-                    ↓                       ↓
-              Dashboard              GitHub PR
-```
-
----
-
-# 🧠 Machine Learning Pipeline
+## 6. Detection Pipeline
+
+1.  **Transaction generation:** The `simulator.ts` module generates a mix of synthetic baseline traffic and targeted attacks.
+2.  **Redis stream:** Transactions are pushed to a Redis Stream (`transactions:stream`).
+3.  **Consumer:** The Node.js event loop pulls messages sequentially.
+4.  **ML prediction:** Historical features are bundled and sent to the FastAPI service to retrieve a base fraud probability.
+5.  **Risk scoring:** The stream passes through the Spike and Graph engines to accumulate rule-based penalties.
+6.  **Spike detection:** Calculates rolling baselines to detect volumetric attacks.
+7.  **Ring detection:** Updates an in-memory graph connecting entities to detect shared infrastructure and synchronized timing.
+8.  **PostgreSQL:** The final normalized transaction, features, and relationship edges are stored durably.
+9.  **Socket.IO:** A Redis subscriber listens for alerts and broadcasts them over WebSockets.
+10. **Analyst dashboard:** The Next.js frontend updates visually in real time.
+
+## 7. Fraud Risk Scoring
+
+Transactions are assigned a final risk score (`0-100`) based on an aggregation of multiple signals:
+
+*   **ML probability:** The raw prediction score returned by the LightGBM model.
+*   **Velocity:** Exponential penalties for rapid succession transactions.
+*   **Amount anomaly:** Flags for suspiciously repetitive transaction values.
+*   **Temporal coordination:** High synchronization between independent accounts.
+*   **Shared device/IP:** Connections to known high-risk hardware or network identifiers.
+
+The final score is classified by severity: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+
+## 8. Abuse Ring Detection
+
+The Graph Engine dynamically maps relationships within a sliding time window:
+*   `Account → uses → Device`
+*   `Account → connects → IP`
+
+When multiple supposedly distinct accounts share the same hardware or network parameters within a tight temporal window, the engine extracts a sub-graph cluster, scores the severity of the overlap, and emits an Abuse Ring alert.
+
+## 9. Real-Time Dashboard
+
+The Next.js frontend is divided into three primary investigative views:
+
+1.  **Command Center:** The primary hub. Displays live system metrics, a real-time transaction stream, the velocity chart, and global alerts.
+2.  **Ring Explorer:** Dedicated workspace for visualizing extracted abuse rings, including the network graph and scoring signals.
+3.  **Spike Timeline:** Historical and active visualization of volumetric anomalies and velocity thresholds.
+
+## 10. Local Development
+
+### Requirements
+
+*   Node.js (v18+)
+*   Python (3.11+)
+*   `uv` (Fast Python package installer)
+*   PostgreSQL
+*   Redis
+
+### Startup Sequence
+
+1. **Start infrastructure** (Redis and PostgreSQL).
+2. **Setup Databases**:
+   ```bash
+   cd streaming
+   npx prisma db push
+   npx prisma generate
+   ```
+3. **Boot ML Service**:
+   ```bash
+   cd ML
+   uv sync
+   uv run uvicorn app.api:app --host 127.0.0.1 --port 8000
+   ```
+4. **Boot Streaming Backend & Consumer**:
+   ```bash
+   cd streaming
+   npm install
+   npm run dev      # Starts the REST/WebSocket API
+   # In a new terminal:
+   npx ts-node src/consumer.ts
+   # In a new terminal:
+   npx ts-node src/simulator.ts
+   ```
+5. **Boot Frontend**:
+   ```bash
+   cd web
+   npm install
+   npm run dev
+   ```
+
+## 11. Environment Variables
+
+Copy the provided `.env.example` files to `.env` or `.env.local` in their respective directories.
+
+**Frontend (`web/.env.local`)**:
+*   `NEXT_PUBLIC_API_URL`: Points to the Node.js backend (e.g., `http://localhost:4000`).
+
+**Backend (`streaming/.env`)**:
+*   `DATABASE_URL`: PostgreSQL connection string.
+*   `REDIS_URL`: Redis connection string.
+*   `ML_API_URL`: Points to the FastAPI ML service (e.g., `http://127.0.0.1:8000`).
+*   `FRONTEND_URL`: Used for strict CORS enforcement in production.
+*   `NODE_ENV`: Set to `production` to enforce environment variable validation.
+
+**ML Service (`ML/.env`)**:
+*   `PORT`: Dynamic port binding (defaults to `8000`).
+
+*Note: The `.env.example` templates contain safe, fake data. Never commit real credentials.*
 
-## 1. Feature Extraction
+## 12. ML Service
 
-For every file/component:
+The ML service is an isolated Python microservice built with FastAPI. It loads a pre-trained LightGBM model and exposes a low-latency `/predict` endpoint.
 
-### Git Features
-
-```text
-commit_frequency
-changes_last_7_days
-changes_last_30_days
-lines_added
-lines_deleted
-number_of_authors
-file_age
-bug_fix_count
-```
-
-### Code Features
-
-```text
-cyclomatic_complexity
-lines_of_code
-function_count
-class_count
-dependency_count
-inheritance_depth
-```
-
-### Historical Features
-
-```text
-previous_bug_count
-previous_refactoring_count
-historical_churn
-time_since_last_change
-```
-
----
-
-## 2. Prediction Target
-
-The model predicts whether a component will experience a significant event within a future time window.
-
-For example:
-
-```text
-Input:
-Repository state at commit T
-
-Target:
-Did this component experience a bug-inducing
-change within the next N commits?
-```
-
-This turns the problem into a **temporal prediction task**.
-
----
-
-# 🧠 ML / DL Models
-
-The project can use multiple models.
-
-### Baseline
-
-* Logistic Regression
-* Random Forest
-* XGBoost
-
-### Deep Learning
-
-* MLP
-* LSTM/Temporal model
-
-### Graph Learning
-
-* Graph Neural Network
-* GraphSAGE
-* GAT
-
-The baseline model provides a benchmark against which more advanced approaches can be evaluated.
-
----
-
-# 🤖 Agent Architecture
-
-The agentic layer is responsible for **investigation and reasoning**, not replacing the ML model.
-
-### Investigator Agent
-
-Analyzes:
-
-* recent commits
-* code changes
-* Git blame
-* dependency relationships
-* previous bugs
-
-### Dependency Agent
-
-Investigates:
-
-> "What happens if this component changes?"
-
-### History Agent
-
-Analyzes:
-
-> "How has this component evolved?"
-
-### Refactoring Agent
-
-Analyzes:
-
-> "What architectural changes could reduce future risk?"
-
-### Report Agent
-
-Combines the findings into a concise engineering report.
-
----
-
-# 📈 Example Output
-
-```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        CODEBASE EVOLUTION REPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Repository:
-example-project
-
-Overall Health:
-72 / 100
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔥 HIGH-RISK COMPONENTS
-
-1. payment/service.py
-   Risk: 91%
-
-2. auth/controller.py
-   Risk: 84%
-
-3. database/connection.py
-   Risk: 78%
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📈 PREDICTED EVOLUTION
-
-payment/service.py
-
-Expected churn: HIGH
-Complexity growth: HIGH
-Dependency risk: HIGH
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🧠 AI ANALYSIS
-
-The component has experienced significant
-recent churn and increasing coupling.
-
-Three recent bug-fix commits modified shared
-payment state.
-
-The component is connected to 7 downstream
-modules.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔧 RECOMMENDATION
-
-Consider splitting PaymentService into
-smaller domain-specific components.
-
-Estimated affected modules: 7
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
----
-
-# 🧪 Evaluation
-
-The system will be evaluated using historical repository data.
-
-The basic methodology:
-
-```text
-Repository History
-
-       ↓
-
-Train on:
-Commit 1 → Commit N
-
-       ↓
-
-Predict:
-Commit N+1 → Commit N+k
-
-       ↓
-
-Compare with:
-Actual future changes
-```
-
-### Metrics
-
-Depending on the prediction task:
-
-* Precision
-* Recall
-* F1 Score
-* ROC-AUC
-* PR-AUC
-* Top-K Recall
-* Calibration
-* False Positive Rate
-
-For ranking risky files:
-
-* Precision@K
-* Recall@K
-* NDCG
-
----
-
-# 🛠️ Tech Stack
-
-## Machine Learning
-
-* Python
-* PyTorch
-* Scikit-learn
-* XGBoost
-* NetworkX
-
-## Code Intelligence
-
-* Tree-sitter
-* GitPython
-* AST analysis
-
-## AI
-
-* LLM APIs
-* LangGraph / Agent framework
-* Embeddings
-* RAG
-
-## Backend
-
-* FastAPI
-* PostgreSQL
-* Redis
-
-## Vector Search
-
-* Qdrant / pgvector
-
-## Frontend
-
-* Next.js
-* React
-* Tailwind CSS
-* D3.js / React Flow
-
-## Infrastructure
-
-* Docker
-* GitHub API
-* AWS
-
----
-
-# 📂 Project Structure
-
-```text
-codebase-evolution-predictor/
-│
-├── backend/
-│   ├── api/
-│   ├── services/
-│   ├── models/
-│   └── database/
-│
-├── ml/
-│   ├── preprocessing/
-│   ├── features/
-│   ├── training/
-│   ├── evaluation/
-│   └── inference/
-│
-├── graph/
-│   ├── parser/
-│   ├── builder/
-│   └── models/
-│
-├── agents/
-│   ├── investigator/
-│   ├── dependency/
-│   ├── history/
-│   ├── refactoring/
-│   └── report/
-│
-├── frontend/
-│   ├── components/
-│   ├── pages/
-│   └── dashboard/
-│
-├── data/
-├── notebooks/
-├── tests/
-├── docker/
-│
-├── requirements.txt
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-# 🚀 Getting Started
-
-## Clone the Repository
-
+**Run Locally:**
 ```bash
-git clone https://github.com/your-username/codebase-evolution-predictor.git
-
-cd codebase-evolution-predictor
+cd ML
+uv sync
+uv run uvicorn app.api:app --host 127.0.0.1 --port 8000
 ```
 
-## Create Environment
-
+**Run via Docker:**
+A production `Dockerfile` is provided that uses `uv` for minimal, fast dependency resolution.
 ```bash
-python -m venv .venv
-
-source .venv/bin/activate
+cd ML
+docker build -t fraud-ml-service .
+docker run -p 8000:8000 -e PORT=8000 fraud-ml-service
 ```
 
-## Install Dependencies
+## 13. API
 
-```bash
-pip install -r requirements.txt
-```
+The Node.js backend (`streaming/src/server.ts`) exposes the following REST endpoints:
 
-## Environment Variables
+*   `GET /api/health` - Health check.
+*   `GET /api/dashboard/metrics` - Aggregated live metrics.
+*   `GET /api/rings` - List of detected abuse rings.
+*   `GET /api/rings/:id` - Detailed view of a specific ring.
+*   `GET /api/spikes` - List of velocity spikes.
+*   `GET /api/transactions/:id` - Transaction detail.
+*   `POST /api/investigations` - Create an analyst investigation.
 
-Create `.env`:
+## 14. Socket.IO Events
 
-```env
-GITHUB_TOKEN=your_github_token
+The backend emits the following real-time events to connected clients:
 
-LLM_API_KEY=your_api_key
+*   `ring_detected`: Dispatches full graph and scoring data when a new abuse ring is confirmed.
+*   `spike_detected`: Dispatches alerts when transaction velocity breaches critical thresholds.
+*   `new_transaction`: Streams normalized transactions dynamically as they are processed.
+*   `metrics_update`: Pushes updated system-wide aggregations (e.g., money at risk, TPS latency).
 
-DATABASE_URL=postgresql://user:password@localhost:5432/codeevolution
+## 15. Simulator
 
-REDIS_URL=redis://localhost:6379
+The `streaming/src/simulator.ts` script generates synthetic transactions for demonstration and load-testing purposes. It injects organic traffic alongside coordinated "spike" attacks and "credential stuffing" rings. 
 
-VECTOR_DB_URL=your_vector_database_url
-```
+**It is NOT intended to be a production data source** and should be replaced by a live payment gateway webhook or Kafka ingestion layer in a real deployment.
 
-## Run Backend
+## 16. Deployment
 
-```bash
-uvicorn backend.main:app --reload
-```
+The intended production architecture is decoupled and scalable:
+*   **Frontend**: Next.js deployed statically to Vercel or a CDN.
+*   **Backend & Consumer**: Node.js services deployed as auto-scaling containers (e.g., ECS, Cloud Run).
+*   **ML Service**: Python FastAPI deployed as a containerized service.
+*   **Database**: Managed PostgreSQL instance (e.g., AWS RDS, Supabase).
+*   **Cache/Queue**: Managed Redis instance (e.g., Upstash, ElastiCache).
 
-## Run Frontend
+## 17. Security
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+*   Secrets and connection strings are strictly managed via environment variables.
+*   `.env` files and Redis dumps (`dump.rdb`) are explicitly `.gitignore`d.
+*   Production CORS origins are dynamically configurable via the `FRONTEND_URL` variable.
+*   Internal microservice routing (`ML_API_URL`) is environment-based, keeping internal traffic off public interfaces.
 
----
+## 18. Limitations
 
-# 🔬 Research Questions
+*   **Synthetic data:** All transaction data is artificially generated.
+*   **Authentication:** The frontend login is currently a hardcoded/demo placeholder.
+*   **Payment integration:** There is no integration with actual payment processors (Stripe, Adyen, etc.).
+*   **Model training:** The LightGBM model was trained on synthetic datasets specifically tailored to demonstrate the dashboard features.
+*   **Deployment readiness:** While the code is containerized and validates environment variables, it is designed as a technical demonstration rather than PCI-compliant banking infrastructure.
 
-The project explores several interesting questions:
+## 19. Future Improvements
 
-### RQ1
+*   Real payment gateway integration (webhooks).
+*   Stronger authentication & RBAC for analysts.
+*   Model monitoring & drift detection.
+*   Dedicated Feature Store for the ML pipeline.
+*   Distributed worker queues for the consumer.
+*   Better alert routing (Slack/PagerDuty).
+*   Analyst case management persistence.
+*   Production-grade observability (Datadog/Prometheus).
 
-Can historical software evolution predict future bug-prone components?
+## 20. Screenshots
 
-### RQ2
+*A screenshot of the dashboard interface is available at `docs/assets/architecture.png`.*
+*ML training metrics and PR curves are available in the `ML/reports/` and `ML/frontend/public/` directories.*
 
-Does incorporating dependency graphs improve prediction over traditional tabular ML?
+## 21. License
 
-### RQ3
-
-Can temporal information improve code evolution prediction?
-
-### RQ4
-
-Can LLM agents explain ML-generated risk predictions in a useful way?
-
-### RQ5
-
-Can automated refactoring recommendations reduce predicted future risk?
-
----
-
-# 🎯 Future Improvements
-
-* [ ] Graph Transformer architecture
-* [ ] Multi-repository pretraining
-* [ ] Reinforcement learning for refactoring decisions
-* [ ] Automatic GitHub PR generation
-* [ ] CI/CD integration
-* [ ] Real-time repository monitoring
-* [ ] Learned code embeddings
-* [ ] Developer-level collaboration modeling
-* [ ] Cross-language repository support
-* [ ] Automated refactoring impact simulation
-
----
-
-# 🌟 What Makes This Different?
-
-Most AI-powered developer tools focus on:
-
-```text
-"Fix this bug."
-```
-
-Codebase Evolution Predictor focuses on:
-
-```text
-"Predict what is likely to become a problem
-before it actually becomes one."
-```
-
-It combines:
-
-```text
-Software Repository Mining
-        +
-Machine Learning
-        +
-Deep Learning
-        +
-Graph Neural Networks
-        +
-Temporal Modeling
-        +
-LLM Reasoning
-        +
-Agentic AI
-        +
-Software Architecture
-```
-
-The goal is not to build another AI coding chatbot.
-
-The goal is to build an **intelligent early-warning system for software evolution.**
-
----
-
-# 👨‍💻 Team
-
-Built as a collaborative research/engineering project by:
-
-**Saksham Sharma**
-
----
-
-# 📜 License
-
-This project is licensed under the MIT License.
+A license decision is still needed for this repository. Please add a `LICENSE` file before distributing.

@@ -1,0 +1,115 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Transaction {
+  id              String   @id
+  accountId       String
+  deviceId        String
+  ipAddress       String
+  merchantId      String
+  amount          Float
+  timestamp       DateTime
+  type            String
+
+  riskScore       RiskScore?
+}
+
+model Account {
+  id          String   @id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations could be added here
+}
+
+model Device {
+  id          String   @id
+  createdAt   DateTime @default(now())
+}
+
+model IP {
+  id          String   @id
+  createdAt   DateTime @default(now())
+}
+
+model Merchant {
+  id          String   @id
+  createdAt   DateTime @default(now())
+}
+
+model Alert {
+  id            String   @id @default(uuid())
+  type          String   // 'SPIKE', 'RING', 'TRANSACTION'
+  severity      String
+  referenceId   String   // ID of Spike or Ring
+  status        String   @default("OPEN") // OPEN, INVESTIGATING, CLOSED
+  createdAt     DateTime @default(now())
+}
+
+model Spike {
+  id               String   @id
+  startTime        DateTime
+  endTime          DateTime?
+  peakTps          Float
+  baselineTps      Float
+  transactionCount Int
+  amount           Float
+  severity         String
+}
+
+model AbuseRing {
+  id                String   @id
+  status            String
+  riskScore         Float
+  severity          String
+  transactionCount  Int
+  totalAmount       Float
+  velocityMultiplier Float
+  temporalCoordination Float
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  members           RingMember[]
+}
+
+model RingMember {
+  id          String   @id @default(uuid())
+  ringId      String
+  accountId   String
+  ring        AbuseRing @relation(fields: [ringId], references: [id])
+}
+
+model GraphEdge {
+  id          String   @id @default(uuid())
+  sourceId    String
+  targetId    String
+  relation    String   // 'uses', 'connects', 'pays'
+  weight      Int
+  amount      Float
+}
+
+model RiskScore {
+  id            String   @id @default(uuid())
+  transactionId String   @unique
+  finalScore    Float
+  severity      String
+  signalsJson   String   // JSON containing ML, Spike, Ring contributions
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+}
+
+model Investigation {
+  id          String   @id @default(uuid())
+  title       String
+  status      String
+  analyst     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,20 @@
+{
+  "threshold": 0.08434892064693292,
+  "metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "tn": 85,
+    "fp": 0,
+    "fn": 0,
+    "tp": 21,
+    "pr_auc": 1.0,
+    "roc_auc": 1.0,
+    "total_cost": 2100.0
+  },
+  "latency": {
+    "test_destination_01": 0,
+    "test_amount_01": 0,
+    "test_velocity_01": 0
+  }
+}
