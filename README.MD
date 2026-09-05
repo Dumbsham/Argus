@@ -8,7 +8,7 @@
 
 🚀 Live Demo
 
-👉 Try Argus Live
+👉 https://argus-blond-pi.vercel.app/rings     Try Argus Live
 
 Explore the live Abuse Ring Detection dashboard and see detected fraud networks in action.
 
