@@ -6,6 +6,12 @@
 
 *Catch the spike. Trace the ring. Stop the fraud — in real time.*
 
+🚀 Live Demo
+
+👉 Try Argus Live
+
+Explore the live Abuse Ring Detection dashboard and see detected fraud networks in action.
+
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
